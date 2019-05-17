@@ -15,27 +15,29 @@ int main(int argc, char *argv[])
           f_error("There are no enough arguments");
       }
 
-      //TODO: Another check for the case where `-p-` does not exist in argv
+      // Another check for the case where `-p-` does not exist in argv
+      int i = 0;
+       for (char **a = argv ; a != argv+argc ; a++) {
+        if(strcmp(*a, "-p-")){
+            i = 1;
+            break;
+        }
+        }
+        if(!i){
+            f_error("Failed, -p- is missing");
+        }
 
-
-      // Loop over argv to get the first and second commands.
-    char *a[2];
-    int issecond = 0;
-    char **arg;
-    for (arg = argv; *arg; ++arg) { // for each arg
-        if(*arg == "-p-"){
-            issecond = 1;
+    // Loop over argv to get the first and second commands.
+    i = 0;
+    char *prg1[];
+    char *prg2[];
+     for (char **a = argv ; a != argv+argc ; a++) {
+        // Skip `marker` and `-p-`
+        if(!strcmp(*a, "-p-") || strstr(*a, "marker") != NULL){
             continue;
         }
-        printf("%s",*arg);
-        char *p;
-        for (p = *arg; *p; ++p) {      // for each character
-            if(issecond){
-                strcat(a[1],p);
-            }else{
-                strcat(a[0],p);
-            }
-        }
+
+        //TODO: ADD the programs to `prg1` and `prg2` with their arguments
     }
 
 }
