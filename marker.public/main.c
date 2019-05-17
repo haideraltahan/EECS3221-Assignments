@@ -10,9 +10,9 @@ int was_alarm=0;
 /* in time (just the parent exiting may not be enough to kill the children) */
 int main(int argc, char *argv[])
 {
-//  if(argc < 4){
-//      f_error("There are no enough arguments", 1);
-//  }
+  if(argc < 4){
+      f_error("There are no enough arguments");
+  }
 
     char *a[2];
     int issecond = 0;

@@ -8,16 +8,13 @@ void alrm_handler(int i)
 /* Prints string s using perror and exits. Also checks errno to make */
 /* sure that it is not zero (if it is just prints s followed by newline */
 /* using fprintf to the standard error */
-void f_error(char *s, int i)
+void f_error(char *s)
 {
     perror(s);
     FILE * fp;
 
-    if(i == 1){
-        fp = fopen ("test.err1", "w");
-    }else{
-        fp = fopen ("test.err2", "w");
-    }
+    fp = fopen ("test.err1", "w");
+
     if(errno == 0){
         fprintf(fp, "%s\n", s);
     }
