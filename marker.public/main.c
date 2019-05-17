@@ -10,10 +10,15 @@ int was_alarm=0;
 /* in time (just the parent exiting may not be enough to kill the children) */
 int main(int argc, char *argv[])
 {
-  if(argc < 4){
-      f_error("There are no enough arguments");
-  }
+    // This means that is it not of the form `marker ls -p- wc
+      if(argc < 4){
+          f_error("There are no enough arguments");
+      }
 
+      //TODO: Another check for the case where `-p-` does not exist in argv
+
+
+      // Loop over argv to get the first and second commands.
     char *a[2];
     int issecond = 0;
     char **arg;

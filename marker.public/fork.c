@@ -25,4 +25,7 @@ pid_t start_child(const char *path, char *const argv[],
         f_error("Failed to fork child");
     }
 
+    if(child == 0 ){
+
+    }
 }
