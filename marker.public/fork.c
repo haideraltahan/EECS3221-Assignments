@@ -11,16 +11,7 @@ void alrm_handler(int i)
 void f_error(char *s)
 {
     perror(s);
-    FILE * fp;
-
-    fp = fopen ("test.err1", "w");
-
-    if(errno == 0){
-        fprintf(fp, "%s\n", s);
-    }
-
-    fclose(fp);
-    exit(0);
+    exit(1);
 }
 
 /* Creates a child process using fork and a function from the exec family */
@@ -29,5 +20,9 @@ void f_error(char *s)
 pid_t start_child(const char *path, char *const argv[],
 		  int fdin, int fdout, int fderr)
 {
+    pid_t child = fork();
+    if(child < 0){
+        f_error("Failed to fork child");
+    }
 
 }
