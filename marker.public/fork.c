@@ -10,8 +10,15 @@ void alrm_handler(int i)
 /* using fprintf to the standard error */
 void f_error(char *s)
 {
-    perror(s);
-    exit(1);
+	//errorno is a variable in the errno.h header file. It is set by itself when using system calls.
+	//It gets set but should never be 0, as this means no error
+	if (errno == 0)
+		fprintf(stderr, "%s\n", s);
+	else { //errno != 0
+		perror(s); //This prints "whatever string s is : the desription of the error" automatically
+		//e.g. Error: : No such file or directory if we pass s as "Error" and the last system call tried to open a file
+		//and that file didn't exist. 
+	}
 }
 
 /* Creates a child process using fork and a function from the exec family */
