@@ -17,7 +17,9 @@ void f_error(char *s)
 	else { //errno != 0
 		perror(s); //This prints "whatever string s is : the desription of the error" automatically
 		//e.g. Error: : No such file or directory if we pass s as "Error" and the last system call tried to open a file
-		//and that file didn't exist. 
+		//and that file didn't exist.
+		// Needs to exit the program. According to the documentation above.
+	    exit(1);
 	}
 }
 
@@ -27,12 +29,23 @@ void f_error(char *s)
 pid_t start_child(const char *path, char *const argv[],
 		  int fdin, int fdout, int fderr)
 {
+//    int p[2];
+//    p[0] = fdin;
+//    p[1] = fdout;
+//    if (pipe(p) == -1){
+//        f_error("Failed to create pipe in child");
+//    }
     pid_t child = fork();
-    if(child < 0){
+    if(child == -1){
         f_error("Failed to fork child");
     }
-
-    if(child == 0 ){
-
+    if(child == 0){
+        /* Close stdin, duplicate the input side of pipe to fdout */
+        close(fdin); // child doesn't read
+        dup2(fdout, 1); // redirect stdout
+        char *argv[] = { "date", NULL };
+        execvp(argv[0], argv);
+        f_error("Exec failed");
+        exit(0);
     }
 }

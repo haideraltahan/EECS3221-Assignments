@@ -10,7 +10,7 @@ int was_alarm=0;
 /* in time (just the parent exiting may not be enough to kill the children) */
 int main(int argc, char *argv[])
 {
-    // This means that is it not of the form `marker ls -p- wc
+      // This means that is it not of the form `marker ls -p- wc
       if(argc < 4){
           f_error("There are no enough arguments");
       }
@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
 
     // Loop over argv to get the first and second commands.
     i = 0;
-    char *prg1[];
-    char *prg2[];
-     for (char **a = argv ; a != argv+argc ; a++) {
+    char *prg1[2];
+    char *prg2[2];
+    for (char **a = argv ; a != argv+argc ; a++) {
         // Skip `marker` and `-p-`
         if(!strcmp(*a, "-p-") || strstr(*a, "marker") != NULL){
             continue;
@@ -39,5 +39,11 @@ int main(int argc, char *argv[])
 
         //TODO: ADD the programs to `prg1` and `prg2` with their arguments
     }
+
+    //Make first child --test--
+    int fdin = open("test.in", O_RDWR, 0777);
+    int fdout = open("test.out", O_RDWR, 0777);
+    int fderr = open("test.err1", O_RDWR, 0777);
+    start_child(NULL, NULL, fdin, fdout, fderr);
 
 }
