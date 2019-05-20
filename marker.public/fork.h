@@ -1,4 +1,3 @@
-#include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -6,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/types.h>
 
 extern int was_alarm;
 

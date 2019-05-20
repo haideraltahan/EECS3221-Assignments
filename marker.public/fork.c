@@ -37,7 +37,13 @@ pid_t start_child(const char *path, char *const argv[],
         /* Close stdin, duplicate the input side of pipe to fdout */
         close(fdin); // child doesn't read
         dup2(fdout, 1); // redirect stdout
+        if(fdout != 1){
+            f_error("Failed to dup2");
+        }
         dup2(fderr, 2); // to write to test.err1/2
+        if(fderr != 2){
+            f_error("Failed to dup2");
+        }
         char *argv[] = { "date", NULL };
         execvp(argv[0], argv);
         close(fderr);

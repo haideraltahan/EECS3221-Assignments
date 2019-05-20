@@ -50,6 +50,6 @@ int main(int argc, char *argv[])
 //    if (pipe(p) == -1){
 //        f_error("Failed to create pipe in child");
 //    }
-    start_child(NULL, NULL, NULL, fdout, fderr);
+    start_child(NULL, NULL, fdin, fdout, fderr);
 
 }
