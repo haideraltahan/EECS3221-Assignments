@@ -44,6 +44,12 @@ int main(int argc, char *argv[])
     int fdin = open("test.in", O_RDWR, 0777);
     int fdout = open("test.out", O_RDWR, 0777);
     int fderr = open("test.err1", O_RDWR, 0777);
+    int p[2];
+    p[0] = fdin;
+    p[1] = fdout;
+    if (pipe(p) == -1){
+        f_error("Failed to create pipe in child");
+    }
     start_child(NULL, NULL, fdin, fdout, fderr);
 
 }
