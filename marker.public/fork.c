@@ -29,23 +29,21 @@ void f_error(char *s)
 pid_t start_child(const char *path, char *const argv[],
 		  int fdin, int fdout, int fderr)
 {
-//    int p[2];
-//    p[0] = fdin;
-//    p[1] = fdout;
-//    if (pipe(p) == -1){
-//        f_error("Failed to create pipe in child");
-//    }
+    int p[2];
+    p[0] = fdin;
+    p[1] = fdout;
+    if (pipe(p) == -1){
+        f_error("Failed to create pipe in child");
+    }
     pid_t child = fork();
     if(child == -1){
         f_error("Failed to fork child");
     }
     if(child == 0){
         /* Close stdin, duplicate the input side of pipe to fdout */
-        close(fdin); // child doesn't read
-        dup2(fdout, 1); // redirect stdout
+        close(p[0]); // child doesn't read
+        dup2(p[1], 1); // redirect stdout
         char *argv[] = { "date", NULL };
         execvp(argv[0], argv);
-        f_error("Exec failed");
-        exit(0);
     }
 }
