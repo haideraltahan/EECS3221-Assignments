@@ -1,0 +1,4 @@
+1. The programs ld.so and ld-linux.so* find and load the shared libraries needed by a program, prepare the program to run, and then run it. Retrieved from ld.so(8)
+2. A locale is a set of language and cultural rules.  These cover aspects such as language for messages, different character sets, lexicographic conventions, and so on.  A program needs to be able to determine its locale and act accordingly to be portable to different cultures. Retrieved from locale(1), locale(7), and locale(5)
+3. wc reads 16384 bytes (~16KB) at a time. The 16384 bytes is the buffer size.
+4. exit_group(0) does not return anything. It is void function. Retrieved from exit_group(2)
