@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "fork.h"
 
@@ -65,26 +66,49 @@ int main(int argc, char *argv[]) {
 	int out_error = open("error.out", O_RDWR | O_CREAT, 0666);
 	signal(SIGALRM, alrm_handler);
 	alarm(3);
-	int status = -1;
+	int status = -1; //return status for pid1 and pid2
 
 	//Open the pipe
 	if (pipe(fd) < 0) {
 		f_error("pipe");
 	}
 
-	//Run each child process
+	//Run each child process and close files
 	pid1 = start_child(command1[0], command1, in_file, fd[1], in_error);
 	close(fd[1]);
 	pid2 = start_child(command2[0], command2, fd[0], out_file, out_error);
 	close(fd[0]); close(in_file); close(out_file); close(in_error); close(out_error);
 
-	wid = wait(&status);
+	//Check signals
+	while(1) {
+		wid = waitpid(pid1, &status, 0);
+		if (was_alarm) {
+			fprintf(stderr, "At least one process didn't finish\n");
+			kill(pid1, SIGKILL);
+			exit(0);
+		}
+		else {
+			break;
+		}
+	}
+
   	if (wid == pid1)
     	printf("Process %s finished with status %d\n", command1[0], status);
-  	if (wid==pid2)
+  	if (wid == pid2)
     	printf("Process %s finished with status %d\n", command2[0], status);
 
-  	wid = wait(&status);
+  	while(1) {
+		wid = waitpid(pid2, &status, 0);
+		if (was_alarm) {
+			fprintf(stderr, "At least one process didn't finish\n");
+			kill(pid2, SIGKILL);
+			exit(0);
+		}
+		else {
+			break;
+		}
+	}
+
   	if (wid == pid1)
     	printf("Process %s finished with status %d\n", command1[0], status);
   	if (wid == pid2)

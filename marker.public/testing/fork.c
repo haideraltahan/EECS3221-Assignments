@@ -40,6 +40,9 @@ pid_t start_child(const char *path, char *const argv[],
 		if (dup2(fdin, 0) < 0 || dup2(fdout, 1) < 0 || dup2(fderr, 2) < 0) {
 			f_error("dup2");
 		}
+		int i = 0;
+		//while (i < 1500000000) {i++;} //artificial time to test alarms
 		execvp(path, argv);
-	}	
+	}
+
 }
