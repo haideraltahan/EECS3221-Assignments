@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     // Loop over argv to get the first and second commands.
     i = 0;
     int j = 0;
+    int w_status;
     char **prg1 = malloc(sizeof(char*));
     char **prg2 = malloc(sizeof(char*));
     for (char **a = argv ; a != argv+argc ; a++) {
@@ -63,6 +64,21 @@ int main(int argc, char *argv[])
 //    if (pipe(p) == -1){
 //        f_error("Failed to create pipe in child");
 //    }
-    pid_t child1 = start_child(prg1[0], prg1, fdin, fdout, fderr1);
-    wait(NULL);
+
+    was_alarm = start_child(prg1[0], prg1, fdin, fdout, fderr1);
+    signal(SIGALRM, alrm_handler);
+    alarm(3);
+    wait(&w_status);
+    fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
+
+    fprintf(stdout, "%d\n",was_alarm);
+    if(was_alarm > 0){
+        fprintf(stderr, "marker: At least one process did not finish\n");
+    }
+
+    // CLOSE ALL FILES AT THE END
+    close(fdin);
+    close(fdout);
+    close(fderr1);
+    close(fderr2);
 }
