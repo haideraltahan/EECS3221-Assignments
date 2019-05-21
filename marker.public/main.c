@@ -64,5 +64,5 @@ int main(int argc, char *argv[])
 //        f_error("Failed to create pipe in child");
 //    }
     start_child(prg1[0], prg1, fdin, fdout, fderr1);
-
+    wait(NULL);
 }

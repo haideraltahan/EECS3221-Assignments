@@ -41,6 +41,7 @@ pid_t start_child(const char *path, char *const argv[],
         execvp(path, argv);
         close(fdout);
         close(fderr);
+        f_error("Failed to exec child");
     }
     return child;
 }
