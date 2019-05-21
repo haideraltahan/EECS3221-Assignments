@@ -37,8 +37,6 @@ pid_t start_child(const char *path, char *const argv[],
     if(child == 0){
         //while(1);
         /* Close stdin, duplicate the input side of pipe to fdout */
-        //close(fdin); // Should make it read...
-
         dup2(fdout, 1); // redirect stdout
         dup2(fderr, 2); // to write to test.err1/2
         execvp(path, argv);

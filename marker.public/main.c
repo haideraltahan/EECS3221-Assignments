@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     i = 0;
     int j = 0;
     int w_status;
+    int prg1_s, prg2_s = 0;
     int array_init_malloc = 10;
     int size_of_each_string = 50;
     char **prg1 = calloc(array_init_malloc, size_of_each_string * sizeof(char*));
@@ -52,8 +53,10 @@ int main(int argc, char *argv[])
             prg1 = realloc(prg1, size_of_each_string * (j+1) * sizeof(char *));
         }
         if(i == 1){
+            prg2_s = j;
             prg2[j++] = *a;
         } else {
+            prg1_s = j;
             prg1[j++] = *a;
         }
     }
@@ -71,6 +74,17 @@ int main(int argc, char *argv[])
 //        f_error("Failed to create pipe in child");
 //    }
 
+    //read fdin and add it to argv
+    char *input_file = calloc(1000, sizeof(char));
+    unsigned char c;
+    size_t n = 0;
+    while (read(fdin, &c, 1) > 0)
+    {
+        input_file[n++] = (char) c;
+    }
+    input_file[n] = '\0';
+
+    prg1[++prg1_s] = input_file;
     was_alarm = start_child(prg1[0], prg1, fdin, fdout, fderr1);
     signal(SIGALRM, alrm_handler);
     alarm(3);
@@ -80,16 +94,6 @@ int main(int argc, char *argv[])
     if(was_alarm > 0){
         fprintf(stderr, "marker: At least one process did not finish\n");
     }
-    char *input_file;
-    unsigned char c;
-    size_t n = 0;
-    while ((c = read(fdin, &c, 1)) != -1)
-    {
-        input_file[n++] = (char) c;
-    }
-    input_file[n] = '\0';
-    printf("%s\n", input_file);
-
     // CLOSE ALL FILES AT THE END
     close(fdin);
     close(fdout);
