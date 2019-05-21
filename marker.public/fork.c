@@ -3,8 +3,11 @@
 /* This is the handler of the alarm signal. It just updates was_alarm */
 void alrm_handler(int i)
 {
-    kill(getpid(), SIGKILL);
     was_alarm = 1;
+    struct sigaction sa;
+    sa.sa_handler = alrm_handler;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGALRM, &sa, 0);
 }
 
 /* Prints string s using perror and exits. Also checks errno to make */
@@ -36,9 +39,15 @@ pid_t start_child(const char *path, char *const argv[],
         f_error("Failed to fork child");
     }
     if(child == 0){
-        signal(SIGALRM, alrm_handler);
+        struct sigaction act;
+        act.sa_flags = SA_RESTART;
+        act.sa_handler = alrm_handler;
+        sigemptyset(&act.sa_mask);
+        sigaction(SIGALRM, &act, 0);
         alarm(3);
-        //while(1);
+        while(1) {
+            sleep(10);
+        }
         /* Close stdin, duplicate the input side of pipe to fdout */
 		if (dup2(fdin, 0) < 0 || dup2(fdout, 1) < 0 || dup2(fderr, 2) < 0) {
 			f_error("child failed dup2.");

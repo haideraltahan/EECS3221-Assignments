@@ -68,31 +68,43 @@ int main(int argc, char *argv[])
     int fderr2 = open("test.err2", O_RDWR | O_TRUNC, 0777);
     int p[2];
     if (pipe(p) == -1){
-        f_error("Failed to create pipe in child");
+        f_error("Failed to create pipe");
     }
 
-    int w_status = 0;
+    int children[2];
     // run the first child
-    int child_pid1 = start_child(prg1[0], prg1, fdin, p[1], fderr1);
-
+    children[0] = start_child(prg1[0], prg1, fdin, p[1], fderr1);
     close(p[1]);
-    // run second child
-    int child_pid2 = start_child(prg2[0], prg2, p[0], fdout, fderr2);
 
-    close(p[0]);
+    // run second child
+    children[1] = start_child(prg2[0], prg2, p[0], fdout, fderr2);
+
     // CLOSE ALL FILES AT THE END
+    close(p[0]);
     close(fdin);
     close(fdout);
     close(fderr1);
     close(fderr2);
 
-    for(i =0; i <2;i++){
-        int child = wait(&w_status);
-        if(child == child_pid2){
-            fprintf(stdout, "Process %s finished with status %d\n", prg2[0], w_status);
+    int temp, w_status = 0;
+    while(1){
+        if(temp > 1){
+            break;
         }
-        if(child == child_pid1){
-            fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
+        for(i =0; i <2;i++){
+            child = waitpid(children[i], &w_status, WUNTRACED);
+
+            if(child == -1 && errno == EINTR && was_alarm) {
+                printf("%d\n", child);
+                if(child == children[1]){
+                    fprintf(stdout, "Process %s finished with status %d\n", prg2[0], w_status);
+                    temp++;
+                }
+                if(child == children[0]){
+                    fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
+                    temp++;
+                }
+            }
         }
     }
 
@@ -100,5 +112,4 @@ int main(int argc, char *argv[])
     if(was_alarm == 1){
         fprintf(stderr, "marker: At least one process did not finish\n");
     }
-
 }
