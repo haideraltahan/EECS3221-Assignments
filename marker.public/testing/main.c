@@ -58,22 +58,22 @@ int main(int argc, char *argv[]) {
 	if (pid == 0) { //Child
 		printf("Child\n");
 		close(fd[0]);
-		close(0);
-		dup(3);
-		close(1);
-		dup(4);
-		close(2);
-		close(3); 
-		close(4);
+		close(0); //close stdin
+		dup(in_file); //replace it with in_file
+		close(1); //close stdout
+		dup(out_file); //replace with out_file
+		close(2); //close stderror for now
+		close(in_file);
+		close(out_file);
 		char *cmd[] = {"wc", NULL};
 		execvp(cmd[0], cmd);
 
 	}
 	if (pid > 0) {//Parent
 		printf("Parent\n");
+		wait();
 		close(fd[1]);
 		close(3); close(4);
-		wait();
 	}
 	exit(0);
 	
