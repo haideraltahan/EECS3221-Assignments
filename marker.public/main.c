@@ -73,25 +73,32 @@ int main(int argc, char *argv[])
 
     int w_status = 0;
     // run the first child
-    was_alarm = start_child(prg1[0], prg1, fdin, p[1], fderr1);
-    signal(SIGALRM, alrm_handler);
-    alarm(3);
-    wait(&w_status);
-    fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
+    int child_pid1 = start_child(prg1[0], prg1, fdin, p[1], fderr1);
 
-    //run second child
-    was_alarm = start_child(prg2[0], prg2, p[0], fdout, fderr2);
-    signal(SIGALRM, alrm_handler);
-    alarm(3);
-    wait(&w_status);
-    fprintf(stdout, "Process %s finished with status %d\n", prg2[0], w_status);
+    close(p[1]);
+    // run second child
+    int child_pid2 = start_child(prg2[0], prg2, p[0], fdout, fderr2);
 
-    if(was_alarm == 2){
-        fprintf(stderr, "marker: At least one process did not finish\n");
-    }
+    close(p[0]);
     // CLOSE ALL FILES AT THE END
     close(fdin);
     close(fdout);
     close(fderr1);
     close(fderr2);
+
+    for(i =0; i <2;i++){
+        int child = wait(&w_status);
+        if(child == child_pid2){
+            fprintf(stdout, "Process %s finished with status %d\n", prg2[0], w_status);
+        }
+        if(child == child_pid1){
+            fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
+        }
+    }
+
+
+    if(was_alarm == 1){
+        fprintf(stderr, "marker: At least one process did not finish\n");
+    }
+
 }
