@@ -18,9 +18,9 @@ void f_error(char *s)
 		perror(s); //This prints "whatever string s is : the desription of the error" automatically
 		//e.g. Error: : No such file or directory if we pass s as "Error" and the last system call tried to open a file
 		//and that file didn't exist.
+	    // Needs to exit the program. According to the documentation above.
+	    exit(1);
 	}
-	// Needs to exit the program. According to the documentation above.
-	exit(1);
 }
 
 /* Creates a child process using fork and a function from the exec family */
@@ -42,4 +42,5 @@ pid_t start_child(const char *path, char *const argv[],
         close(fdout);
         close(fderr);
     }
+    return child;
 }
