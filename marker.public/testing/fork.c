@@ -41,8 +41,9 @@ pid_t start_child(const char *path, char *const argv[],
 			f_error("dup2");
 		}
 		int i = 0;
-		//while (i < 1500000000) {i++;} //artificial time to test alarms
+		//while (i < 2000000000) {i++;} //artificial time to test alarms
 		execvp(path, argv);
+		f_error("execvp"); //If we're here, error because execvp did not replace memory
 	}
 
 }

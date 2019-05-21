@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 	//Run each child process and close files
 	pid1 = start_child(command1[0], command1, in_file, fd[1], in_error);
 	close(fd[1]);
-	pid2 = start_child(command2[0], command2, fd[0], out_file, out_error);
+	pid2 = start_child(command2[0], command2, fd[0], out_file, NULL);
 	close(fd[0]); close(in_file); close(out_file); close(in_error); close(out_error);
 
 	//Check signals
@@ -85,6 +85,8 @@ int main(int argc, char *argv[]) {
 		if (was_alarm) {
 			fprintf(stderr, "At least one process didn't finish\n");
 			kill(pid1, SIGKILL);
+			kill(pid2, SIGKILL);
+
 			exit(0);
 		}
 		else {
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]) {
 		wid = waitpid(pid2, &status, 0);
 		if (was_alarm) {
 			fprintf(stderr, "At least one process didn't finish\n");
+			kill(pid1, SIGKILL);
 			kill(pid2, SIGKILL);
 			exit(0);
 		}
