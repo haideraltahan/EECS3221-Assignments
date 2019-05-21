@@ -31,11 +31,14 @@ int main(int argc, char *argv[])
     i = 0;
     int j = 0;
     int w_status;
-    char **prg1 = malloc(sizeof(char*));
-    char **prg2 = malloc(sizeof(char*));
+    int array_init_malloc = 10;
+    int size_of_each_string = 50;
+    char **prg1 = calloc(array_init_malloc, size_of_each_string * sizeof(char*));
+    char **prg2;
     for (char **a = argv ; a != argv+argc ; a++) {
         // Skip `marker` and `-p-`
         if(strcmp(*a, "-p-") == 0){
+            prg2 = calloc(array_init_malloc, size_of_each_string * sizeof(char*));
             i = 1;
             j = 0;
             continue;
@@ -43,16 +46,19 @@ int main(int argc, char *argv[])
         if(strstr(*a, "marker") != NULL){
             continue;
         }
-        if(i == 1){
-            prg2 = (char **)realloc(prg2, (j+1) * sizeof(char));
-            prg2[j] = *a;
+        if(j > array_init_malloc && i == 1){
+            prg2 = realloc(prg2, size_of_each_string * (j+1) * sizeof(char *));
         } else {
-            prg1 = (char **)realloc(prg1, (j+1) * sizeof(char));
-            prg1[j] = *a;
+            prg1 = realloc(prg1, size_of_each_string * (j+1) * sizeof(char *));
         }
-        j++;
+        if(i == 1){
+            prg2[j++] = *a;
+        } else {
+            prg1[j++] = *a;
+        }
     }
 
+    //printf("%s\n", prg1[1]);
     //Make first child --test--
     int fdin = open("test.in", O_RDONLY, 0777);
     int fdout = open("test.out", O_RDWR | O_TRUNC, 0777);
@@ -74,6 +80,15 @@ int main(int argc, char *argv[])
     if(was_alarm > 0){
         fprintf(stderr, "marker: At least one process did not finish\n");
     }
+    char *input_file;
+    unsigned char c;
+    size_t n = 0;
+    while ((c = read(fdin, &c, 1)) != -1)
+    {
+        input_file[n++] = (char) c;
+    }
+    input_file[n] = '\0';
+    printf("%s\n", input_file);
 
     // CLOSE ALL FILES AT THE END
     close(fdin);
