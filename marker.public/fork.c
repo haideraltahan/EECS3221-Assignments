@@ -3,6 +3,8 @@
 /* This is the handler of the alarm signal. It just updates was_alarm */
 void alrm_handler(int i)
 {
+    kill(getpid(), SIGKILL);
+    f_error("Child process did not finish on time");
 }
 
 /* Prints string s using perror and exits. Also checks errno to make */
@@ -34,6 +36,8 @@ pid_t start_child(const char *path, char *const argv[],
         f_error("Failed to fork child");
     }
     if(child == 0){
+        signal(SIGALRM,alrm_handler);
+        alarm(3);
         /* Close stdin, duplicate the input side of pipe to fdout */
         close(fdin); // Should make it read...
         dup2(fdout, 1); // redirect stdout
