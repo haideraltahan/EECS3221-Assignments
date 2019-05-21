@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 		char *cmd[] = {"wc", NULL};
 		execvp(command1[0], command1);
 	}
-	
+	wait();
 	pid2 = fork();
 	if (pid2 < 0) {
 		printf("Fork pid2 failed.\n");
@@ -111,6 +111,7 @@ int main(int argc, char *argv[]) {
 
 	}
 	close(fd[0]); close(fd[1]);
+	wait();
 	/*
 	wid = wait(NULL);
   	if (wid == pid1)
