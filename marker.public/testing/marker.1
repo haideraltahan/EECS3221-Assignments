@@ -1,0 +1,13 @@
+Once compiled using the Makefile, marker can be used by typing the following command:
+./marker arg1 -options1 -p- arg2 -options2
+
+Where arg1 and arg2 are valid shell commands and options1 and options2 correspond to
+optional settings applies when running arg1 and arg2, respectively. arg1 and arg2 must both
+be present, as well as -p-, which seperates the two shell commands and their optional settings.
+The number of settings for each command is specified by the user just by entering the options desired.
+arg1 reads its input from test.in in marker's local directory (test.in must exist) and runs arg1 -options1 and stores its
+output in a pipe. This is done by allowing arg1 to run as a seperate process. The input for args2 is read
+from the pipe and uses that to run arg2 as a seperate process and writes the results to test.out (a file which will be created
+or overwritten if it already exists). Depending on whether arg1 or arg2 fails to execute, files named error.in
+and error.out will be created and written to store the error information. If either child process takes longer than 3
+seconds to terminate, that process will be killed and the marker will stop executing. 
