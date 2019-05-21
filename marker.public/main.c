@@ -29,27 +29,40 @@ int main(int argc, char *argv[])
 
     // Loop over argv to get the first and second commands.
     i = 0;
-    char *prg1[2];
-    char *prg2[2];
+    int j = 0;
+    char **prg1 = malloc(sizeof(char*));
+    char **prg2 = malloc(sizeof(char*));
     for (char **a = argv ; a != argv+argc ; a++) {
         // Skip `marker` and `-p-`
-        if(!strcmp(*a, "-p-") || strstr(*a, "marker") != NULL){
+        if(strcmp(*a, "-p-") == 0){
+            i = 1;
+            j = 0;
             continue;
         }
-
-        //TODO: ADD the programs to `prg1` and `prg2` with their arguments
+        if(strstr(*a, "marker") != NULL){
+            continue;
+        }
+        if(i == 1){
+            prg2 = (char **)realloc(prg2, (j+1) * sizeof(char));
+            prg2[j] = *a;
+        } else {
+            prg1 = (char **)realloc(prg1, (j+1) * sizeof(char));
+            prg1[j] = *a;
+        }
+        j++;
     }
 
     //Make first child --test--
-    int fdin = open("test.in", O_RDWR, 0777);
-    int fdout = open("test.out", O_RDWR, 0777);
-    int fderr = open("test.err1", O_RDWR, 0777);
+    int fdin = open("test.in", O_RDONLY, 0777);
+    int fdout = open("test.out", O_RDWR | O_TRUNC, 0777);
+    int fderr1 = open("test.err1", O_RDWR | O_TRUNC, 0777);
+    int fderr2 = open("test.err2", O_RDWR | O_TRUNC, 0777);
 //    int p[2];
 //    p[0] = fdin;
 //    p[1] = fdout;
 //    if (pipe(p) == -1){
 //        f_error("Failed to create pipe in child");
 //    }
-    start_child(NULL, NULL, fdin, fdout, fderr);
+    start_child(prg1[0], prg1, fdin, fdout, fderr1);
 
 }
