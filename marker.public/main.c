@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
     // Loop over argv to get the first and second commands.
     i = 0;
     int j = 0;
-    int w_status;
     int prg1_s, prg2_s = 0;
     int array_init_malloc = 10;
     int size_of_each_string = 50;
@@ -67,31 +66,27 @@ int main(int argc, char *argv[])
     int fdout = open("test.out", O_RDWR | O_TRUNC, 0777);
     int fderr1 = open("test.err1", O_RDWR | O_TRUNC, 0777);
     int fderr2 = open("test.err2", O_RDWR | O_TRUNC, 0777);
-//    int p[2];
-//    p[0] = fdin;
-//    p[1] = fdout;
-//    if (pipe(p) == -1){
-//        f_error("Failed to create pipe in child");
-//    }
-
-    //read fdin and add it to argv
-    char *input_file = calloc(1000, sizeof(char));
-    unsigned char c;
-    size_t n = 0;
-    while (read(fdin, &c, 1) > 0)
-    {
-        input_file[n++] = (char) c;
+    int p[2];
+    if (pipe(p) == -1){
+        f_error("Failed to create pipe in child");
     }
-    input_file[n] = '\0';
 
-    prg1[++prg1_s] = input_file;
-    was_alarm = start_child(prg1[0], prg1, fdin, fdout, fderr1);
+    int w_status = 0;
+    // run the first child
+    was_alarm = start_child(prg1[0], prg1, fdin, p[1], fderr1);
     signal(SIGALRM, alrm_handler);
     alarm(3);
     wait(&w_status);
     fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
 
-    if(was_alarm > 0){
+    //run second child
+    was_alarm = start_child(prg2[0], prg2, p[0], fdout, fderr2);
+    signal(SIGALRM, alrm_handler);
+    alarm(3);
+    wait(&w_status);
+    fprintf(stdout, "Process %s finished with status %d\n", prg2[0], w_status);
+
+    if(was_alarm == 2){
         fprintf(stderr, "marker: At least one process did not finish\n");
     }
     // CLOSE ALL FILES AT THE END

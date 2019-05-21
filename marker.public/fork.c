@@ -4,6 +4,7 @@
 void alrm_handler(int i)
 {
     kill(was_alarm, SIGKILL);
+    was_alarm = 2;
 }
 
 /* Prints string s using perror and exits. Also checks errno to make */
@@ -19,9 +20,9 @@ void f_error(char *s)
 		perror(s); //This prints "whatever string s is : the desription of the error" automatically
 		//e.g. Error: : No such file or directory if we pass s as "Error" and the last system call tried to open a file
 		//and that file didn't exist.
-	    // Needs to exit the program. According to the documentation above.
-	    exit(1);
 	}
+	// Needs to exit the program. According to the documentation above.
+	exit(1);
 }
 
 /* Creates a child process using fork and a function from the exec family */
@@ -37,8 +38,9 @@ pid_t start_child(const char *path, char *const argv[],
     if(child == 0){
         //while(1);
         /* Close stdin, duplicate the input side of pipe to fdout */
-        dup2(fdout, 1); // redirect stdout
-        dup2(fderr, 2); // to write to test.err1/2
+		if (dup2(fdin, 0) < 0 || dup2(fdout, 1) < 0 || dup2(fderr, 2) < 0) {
+			f_error("child failed dup2.");
+		}
         execvp(path, argv);
     }
     return child;
