@@ -91,3 +91,4 @@ modules.xml
 .idea/sonarlint
 
 # End of https://www.gitignore.io/api/clion+all
+marker.public/marker

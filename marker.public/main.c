@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
     wait(&w_status);
     fprintf(stdout, "Process %s finished with status %d\n", prg1[0], w_status);
 
-    fprintf(stdout, "%d\n",was_alarm);
     if(was_alarm > 0){
         fprintf(stderr, "marker: At least one process did not finish\n");
     }
