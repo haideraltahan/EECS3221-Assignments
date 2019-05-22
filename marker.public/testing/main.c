@@ -64,9 +64,12 @@ int main(int argc, char *argv[]) {
 	int out_file = open("test.out", O_RDWR | O_CREAT, 0666);
 	int in_error = open("error.in", O_RDWR | O_CREAT, 0666);
 	int out_error = open("error.out", O_RDWR | O_CREAT, 0666);
+	if (in_file < 0 || out_file < 0 || in_error < 0 || out_error < 0) {
+		printf("One or more files needed failed to open.\n");
+	}
 	struct sigaction sa;
 	sa.sa_handler = alrm_handler;
-	sigaction(SIGALRM, &sa, NULL);
+	if (sigaction(SIGALRM, &sa, NULL) < 0) {printf("sigaction failed.\n"); exit(-1);}
 	alarm(3);
 	int status = -1; //return status for pid1 and pid2
 
@@ -77,19 +80,21 @@ int main(int argc, char *argv[]) {
 
 	//Run each child process and close files
 	pid1 = start_child(command1[0], command1, in_file, fd[1], in_error);
-	close(fd[1]);
+	if (close(fd[1]) < 0) {printf("Failed to close a file.\n");}
 	pid2 = start_child(command2[0], command2, fd[0], out_file, out_error);
-	close(fd[0]); close(in_file); close(out_file); close(in_error); close(out_error);
+	if (close(fd[0]) < 0 || close(in_file) < 0 || close(out_file) < 0 || close(in_error) < 0 || close(out_error) < 0) {
+		printf("Failed to close a file.\n");
+		exit(-1);
+	}
 
 	//Check signals
 	while(1) {
 		wid = waitpid(pid1, &status, 0);
 		if (was_alarm) {
 			fprintf(stderr, "At least one process didn't finish\n");
-			kill(pid1, SIGKILL);
-			kill(pid2, SIGKILL);
-
-			exit(0);
+			if (kill(pid1, SIGKILL) < 0) {printf("Failed to close the first process.\n");}
+			//kill(pid2, SIGKILL);
+			exit(-1);
 		}
 		else {
 			break;
@@ -105,9 +110,9 @@ int main(int argc, char *argv[]) {
 		wid = waitpid(pid2, &status, 0);
 		if (was_alarm) {
 			fprintf(stderr, "At least one process didn't finish\n");
-			kill(pid1, SIGKILL);
-			kill(pid2, SIGKILL);
-			exit(0);
+			//kill(pid1, SIGKILL);
+			if (kill(pid2, SIGKILL) < 0) {printf("Failed to close the second process.\n");}
+			exit(-1);
 		}
 		else {
 			break;
