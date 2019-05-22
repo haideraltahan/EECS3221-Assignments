@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
     //printf("%s\n", prg1[1]);
     //Make first child --test--
-    int fdin = open("test.in", O_RDONLY, 0777);
+    int fdin = open("test.in", O_RDONLY | O_CREAT, 0777);
     int fdout = open("test.out", O_RDWR | O_TRUNC, 0777);
     int fderr1 = open("test.err1", O_RDWR | O_TRUNC, 0777);
     int fderr2 = open("test.err2", O_RDWR | O_TRUNC, 0777);

@@ -1,0 +1,64 @@
+NAME
+
+marker - send the output of one command/program/process to another command/program/process for further processing.
+
+SYNOSPIS
+
+./marker COMMAND1 [ARG...] -p- COMMAND2 [ARG...]
+
+DESCRIPTION
+
+marker is used to combine two commands, and in this, the output of one command acts as input to another command. Additional arguments to the first command can be inputted in test.in in the same directory. Results of the marker is outputted in the test.out file in the same directory.
+This direct connection between commands/ programs/ processes allows them to operate simultaneously and permits data to be transferred between them continuously rather than having to pass it through temporary text files or through the display screen.
+
+AUTHOR
+
+Written by Haider Al-Tahan
+
+COPYRIGHT
+
+Copyright Â© 2010 Free Software Foundation, Inc. License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+
+kill(2), sigaction(2), wait(2), pipe(2), fork(2), read(2), write(2), open(2), close(2), signal(7), errno(3), dup(2), dup2(2)
+
+EXAMPLES
+
+# Test 1
+rm -f test.in
+touch test.in
+./marker echo Hello -p- echo World
+cat test.out
+
+# should print: World
+
+
+# Test 2
+rm -f test.in
+echo Hello world> test.in
+./marker awk '{print $2}' -p- cat -
+cat test.out
+
+# should print: world
+
+
+# Test 3
+rm -f test.in
+echo Hello world> test.in
+./marker awk '{print $2}' -p- wc -c
+cat test.out
+
+# should print: 6
+
+# Test 4
+rm -f test.in
+echo Hello world> test.in
+./marker cat - -p- wc -z
+cat test.out
+cat test.err1
+cat test.err2
+
+# only test.err2 should contain: wc: invalid option -- 'z'
+#                                Try 'wc --help' for more information.
