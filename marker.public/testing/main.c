@@ -64,7 +64,9 @@ int main(int argc, char *argv[]) {
 	int out_file = open("test.out", O_RDWR | O_CREAT, 0666);
 	int in_error = open("error.in", O_RDWR | O_CREAT, 0666);
 	int out_error = open("error.out", O_RDWR | O_CREAT, 0666);
-	signal(SIGALRM, alrm_handler);
+	struct sigaction sa;
+	sa.sa_handler = alrm_handler;
+	sigaction(SIGALRM, &sa, NULL);
 	alarm(3);
 	int status = -1; //return status for pid1 and pid2
 
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
 	//Run each child process and close files
 	pid1 = start_child(command1[0], command1, in_file, fd[1], in_error);
 	close(fd[1]);
-	pid2 = start_child(command2[0], command2, fd[0], out_file, NULL);
+	pid2 = start_child(command2[0], command2, fd[0], out_file, out_error);
 	close(fd[0]); close(in_file); close(out_file); close(in_error); close(out_error);
 
 	//Check signals
@@ -116,5 +118,6 @@ int main(int argc, char *argv[]) {
     	printf("Process %s finished with status %d\n", command1[0], status);
   	if (wid == pid2)
     	printf("Process %s finished with status %d\n", command2[0], status);
+    exit(0);
 	
 }
