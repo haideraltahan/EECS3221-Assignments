@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
     // run the first child
     children[0] = start_child(argv[1], &argv[1], fdin, p[1], fderr1);
     if (close(p[1]) < 0) f_error("Failed to close a pipe.");
+    alarm(3);
 
     int fdout = open("test.out", O_RDWR | O_TRUNC, 0777);
     int fderr2 = open("test.err2", O_RDWR | O_TRUNC, 0777);

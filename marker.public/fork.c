@@ -35,7 +35,7 @@ pid_t start_child(const char *path, char *const argv[],
         f_error("Failed to fork child");
     }
     if(child == 0){
-        //while(1);
+        while(1);
         /* Close stdin, duplicate the input side of pipe to fdout */
 		if (dup2(fdin, 0) < 0 || dup2(fdout, 1) < 0 || dup2(fderr, 2) < 0) {
 			f_error("child failed dup2.");
