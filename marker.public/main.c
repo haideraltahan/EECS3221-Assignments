@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
     pid_t children[2];
     // run the first child
     children[0] = start_child(argv[1], &argv[1], fdin, p[1], fderr1);
+    alarm(3);
     if (close(p[1]) < 0) f_error("Failed to close a pipe.");
-
     int fdout = open("test.out", O_RDWR | O_TRUNC, 0777);
     int fderr2 = open("test.err2", O_RDWR | O_TRUNC, 0777);
 
@@ -64,23 +64,23 @@ int main(int argc, char *argv[])
 
     // CLOSE ALL FILES AT THE END
     if (close(fdin) < 0 || close(fdout) < 0 || close(fderr1) < 0 || close(fderr2) < 0) f_error("Failed to close a files.");
-    printf("c1: %d, c2: %d\n", children[0], children[1]);
 
-    int w_status = 0;
+    int w_status;
     pid_t child;
-    for(i =0; i <2;i++){
-        child = wait(&w_status);
-	printf("child: %d\n", child);
-        if(was_alarm){
-            if (kill(children[i], SIGKILL) < 0) {f_error("Failed to close one of the child process.");}
-        }
-        if(i == 1){
-            fprintf(stdout, "Process %s finished with status %d\n", argv[p_position], w_status);
-        }
-        if(i == 0){
-            fprintf(stdout, "Process %s finished with status %d\n", argv[1], w_status);
-        }
+    child = waitpid(children[0],&w_status,0);
+    if(was_alarm && child == -1){
+        if (kill(children[0], SIGKILL) < 0) {f_error("Failed to close one of the child process.");}
+        child = waitpid(children[0],&w_status,0);
     }
+    fprintf(stdout, "Process %s finished with status %d\n", argv[1], w_status);
+
+
+    child = waitpid(children[1],&w_status,0);
+    if(was_alarm && child == -1){
+        if (kill(children[1], SIGKILL) < 0) {f_error("Failed to close one of the child process.");}
+        child = waitpid(children[1],&w_status,0);
+    }
+    fprintf(stdout, "Process %s finished with status %d\n", argv[p_position], w_status);
 
     if(was_alarm == 1){
         fprintf(stderr, "marker: At least one process did not finish\n");
