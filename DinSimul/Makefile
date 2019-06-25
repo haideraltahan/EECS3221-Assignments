@@ -21,5 +21,6 @@ clean:
 	/bin/rm ${OBJ} ${TRG}
 
 tar:
-	tar cf Simul.tar ${SRC} ${HDR} Makefile
+	tar cf DinSimul.tar ${SRC} ${HDR} Makefile
+	../sendit DinSimul.tar
 

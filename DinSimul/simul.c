@@ -1,6 +1,6 @@
 /***********************************************************************/
 /**      Author: Minas Spetsakis                                      **/
-/**        Date: Nov. 10 2016                                         **/
+/**        Date: Jun. 2019                                         **/
 /** Description: Skeleton code for Assgn. II                               **/
 /***********************************************************************/
 
@@ -19,49 +19,27 @@ int nblocked;			/* The number of threads blocked */
 
 
 /***********************************************************************
-                             C L I E N T
+                         P H I L O S O P H E R
 ************************************************************************/
-
-void *client(void *vptr)
+void *philosopher(void *vptr)
 {
-  unsigned int seed;
-  int pthrerr;
+  unsigned int seed;		/* This is called from main without    */
+  int pthrerr;			/* creating a new thread               */
   struct thread_arg *ptr;
 
   ptr = (struct thread_arg*)vptr;
 
   while (1)
     {
-      fatalerr("client", 0, "Not yet implemented");
+      fatalerr("philosopher", 0, "Not yet implemented");
     }
   return NULL;
       
 }
 
 /***********************************************************************
-                             S E R V E R
-************************************************************************/
-
-void *server(void *vptr)
-{
-  int busy;
-  int pthrerr;
-  struct thread_arg *ptr;
-
-  ptr = (struct thread_arg*)vptr;
-
-  while (1)
-    {
-      fatalerr("server", 0, "Not yet implemented");
-    }
-  return NULL;
-}
-
-
-/***********************************************************************
                                 C L K
 ************************************************************************/
-
 void *clk(void *vptr)
 {
   int tick;
@@ -74,6 +52,9 @@ void *clk(void *vptr)
   exit(0);
 }
 
+/***********************************************************************
+                               M A I N
+************************************************************************/
 int main(int argc, char **argv)
 {
   int pthrerr, i;
