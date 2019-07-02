@@ -27,11 +27,13 @@ void *philosopher(void *vptr) {
     struct thread_arg *ptr;
 
     ptr = (struct thread_arg *) vptr;
+    pthread_mutex_lock(ptr->mutex);
+    pthread_cond_wait(ptr->start_line, ptr->mutex);
+    pthread_mutex_unlock(ptr->mutex);
 
     while (1) {
-        pthread_mutex_lock(ptr->mutex);
-        pthread_cond_wait(ptr->start_line, ptr->mutex);
-        pthread_mutex_unlock(ptr->mutex);
+        //Do Something
+        break;
     }
     return NULL;
 
@@ -50,23 +52,22 @@ void *clk(void *vptr) {
     if (pthrerr != 0)
         fatalerr("Clock", pthrerr, "Mutex lock failed\n");
     for (tick = 0; tick < ptr->T; tick++) {
-        while (nblocked < (ptr->nserver + ptr->nclient)) {
-            pthrerr = pthread_cond_wait(ptr->clkblockcond, ptr->mutex);
+        while (nblocked < ptr->N) {
+            pthrerr = pthread_cond_wait(ptr->chair, ptr->mutex);
             if (pthrerr != 0)
                 fatalerr("Clock", 0, "Condition wait failed\n");
         }
         nblocked = 0;
-        ttlqlen += size_q(ptr->q);
-        pthrerr = pthread_cond_broadcast(ptr->thrblockcond);
+        pthrerr = pthread_cond_broadcast(ptr->chair);
         if (pthrerr != 0)
             fatalerr("Clock", 0, "Condition b/cast failed\n");
     }
-    printf("Average waiting time:    %f\n", (float) ttlqlen / (float) njobs);
+/*    printf("Average waiting time:    %f\n", (float) ttlqlen / (float) njobs);
     printf("Average execution time:  %f\n", (float) ttlserv / (float) njobs);
     printf("Average turnaround time: %f\n", (float) ttlqlen / (float) njobs +
                                             (float) ttlserv / (float) njobs);
     printf("Average queue length: %f\n", (float) ttlqlen / (float) ptr->nticks);
-    printf("Average interarrival time time: %f\n", (float) ptr->nticks / (float) njobs);
+    printf("Average interarrival time time: %f\n", (float) ptr->nticks / (float) njobs);*/
     /* Here we die with mutex locked and everyone else asleep */
     exit(0);
 }
@@ -85,7 +86,6 @@ int main(int argc, char **argv) {
     pthread_t *alltids;
 
     nblocked = 0;
-    njobs    = 0;
 
     /* Initializer conditions and mutex */
     pthrerr = pthread_cond_init(&start_line, NULL);
@@ -114,6 +114,7 @@ int main(int argc, char **argv) {
     allargs[0].mu = mu;
     allargs[0].mutex = &mutex;
     allargs[0].start_line = &start_line;
+    allargs[0].chair = &chair;
 
     //create all threads
     for (i = 0; i < N; i++) {
