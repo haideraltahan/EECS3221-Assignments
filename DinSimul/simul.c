@@ -17,7 +17,6 @@ int N = 5, T = 100;
 double lam = 0.1, mu = 0.2;
 int nblocked;            /* The number of threads blocked */
 int nThink, nHungry, nEating = 0;
-int njobs;
 enum STATES{THINKING, HUNGRY, EATING};
 int *chopsticks, *chairs;
 pthread_cond_t start_line_cond, clk_cond, chairs_cond, *chopsticks_cond;
@@ -77,7 +76,6 @@ void *philosopher(void *vptr) {
         pthrerr = pthread_mutex_lock(ptr->philosopher_mutex);
         if (pthrerr != 0)
             fatalerr("Client", pthrerr, "Mutex lock failed\n");
-        njobs++;
         // THINK, HUNGRY or EATING
         if (state == THINKING){
             nThink++;
@@ -152,7 +150,6 @@ void *philosopher(void *vptr) {
             state = THINKING;
         }
         printf("Thread id: 0x%02x, done clock, STATE: %d\n", (unsigned)(pthread_self()), state);
-        njobs--;
         pthrerr = pthread_mutex_unlock(ptr->philosopher_mutex);
         if (pthrerr != 0)
             fatalerr("Client", pthrerr, "Mutex unlock failed\n");
@@ -172,7 +169,6 @@ void *clk(void *vptr) {
     if (pthrerr != 0)
         fatalerr("Clock", pthrerr, "Mutex lock failed\n");
     for (tick = 0; tick <= T; tick++) {
-        printf("Clock: %d\n", tick);
         while (nblocked < N) {
             pthrerr = pthread_cond_wait(&clk_cond, ptr->clk_mutex);
             if (pthrerr != 0)
@@ -183,8 +179,6 @@ void *clk(void *vptr) {
         pthrerr = pthread_cond_broadcast(&start_line_cond);
         if (pthrerr != 0)
             fatalerr("Clock", 0, "Condition b/cast failed\n");
-        while (njobs > 0)
-            ;
 
     }
     printf("Average Thinking Time:    %6.2f\n", (float) nThink / (float) (T*N));
