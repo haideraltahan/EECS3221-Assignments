@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <math.h>
 
 #include "args.h"
 #include "error.h"
@@ -31,19 +32,6 @@ int get_chair() {
         }
     }
     return -1;
-}
-
-int *get_chopstick(const int *c1, const int *c2) {
-    static int ans[2] = {0, 0};
-    if (c1 && c2) {
-        ans[0] = 1;
-        ans[1] = 1;
-    } else if (c1) {
-        ans[0] = 1;
-    } else if (c2) {
-        ans[1] = 1;
-    }
-    return ans;
 }
 
 /***********************************************************************
@@ -85,61 +73,56 @@ void *philosopher(void *vptr) {
             // need to go EATING when the chopsticks become available.
             if (rand0_1(&(ptr->seed)) < lam) {
                 state = HUNGRY;
-
-                int i;
-                for (i = 0; i < N - 1; ++i) {
-                    printf("%d", *(chairs + i));
-                }
-                chair = get_chair();
-                if (chair < 0) {
-                    // Wait for a chair
-                    while (chair < 0) {
-                        printf("Thread id: 0x%02x, waiting for chair\n", (unsigned) (pthread_self()));
-                        pthrerr = pthread_cond_wait(&chairs_cond, ptr->philosopher_mutex);
-                        if (pthrerr != 0)
-                            fatalerr("Client", pthrerr, "Condition wait failed\n");
-                        chair = get_chair();
-                    }
-                }
-                // grab the chair
-                *(chairs + chair) = 0;
             }
-        } else if (state == HUNGRY) {
+        }else if (state == HUNGRY) {
             nHungry++;
-            int *chopsticks = get_chopstick((chopsticks + ptr->chops[0]), (chopsticks + ptr->chops[1]));
-            if (!chopsticks[0] && !chopsticks[1]) {
+
+            chair = get_chair();
+            if (chair < 0) {
                 // Wait for a chair
-                while (!chopsticks[0] && !chopsticks[1]) {
-                    if (!*(chopsticks + ptr->chops[0])) {
+                while (chair < 0) {
+                    printf("Thread id: 0x%02x, waiting for chair\n", (unsigned) (pthread_self()));
+                    pthrerr = pthread_cond_wait(&chairs_cond, ptr->philosopher_mutex);
+                    if (pthrerr != 0)
+                        fatalerr("Client", pthrerr, "Condition wait failed\n");
+                    chair = get_chair();
+                }
+            }
+            // grab the chair
+            *(chairs + chair) = 0;
+            if (!*(chopsticks + *(ptr->chops)) || !*(chopsticks + *(ptr->chops + 1))) {
+                printf("C1, C2: %d, %d\n", *(chopsticks + *(ptr->chops)), *(chopsticks + *(ptr->chops + 1)));
+                // Wait for a chair
+                while (!*(chopsticks + *(ptr->chops)) || !*(chopsticks + *(ptr->chops + 1))) {
+                    if (!*(chopsticks + *(ptr->chops))) {
                         printf("Thread id: 0x%02x, waiting for chop\n", (unsigned) (pthread_self()));
-                        pthrerr = pthread_cond_wait((chopsticks_cond + ptr->chops[0]), ptr->philosopher_mutex);
+                        pthrerr = pthread_cond_wait((chopsticks_cond + *(ptr->chops)), ptr->philosopher_mutex);
                         if (pthrerr != 0)
                             fatalerr("Client", pthrerr, "Condition wait failed\n");
                     }
-                    if (!*(chopsticks + ptr->chops[1])) {
+                    if (!*(chopsticks + *(ptr->chops + 1))) {
                         printf("Thread id: 0x%02x, waiting for chop\n", (unsigned) (pthread_self()));
-                        pthrerr = pthread_cond_wait((chopsticks_cond + ptr->chops[1]), ptr->philosopher_mutex);
+                        pthrerr = pthread_cond_wait((chopsticks_cond + *(ptr->chops + 1)), ptr->philosopher_mutex);
                         if (pthrerr != 0)
                             fatalerr("Client", pthrerr, "Condition wait failed\n");
                     }
-                    chopsticks = get_chopstick((chopsticks + ptr->chops[0]), (chopsticks + ptr->chops[1]));
                 }
             }
             *(chopsticks + ptr->chops[0]) = 0;
             *(chopsticks + ptr->chops[1]) = 0;
             state = EATING;
-        }
-        if (state == EATING) {
+        }else if (state == EATING) {
             nEating++;
         }
+
         // If less than mu, then we switch to THINKING.
         *(chopsticks + ptr->chops[0]) = 1;
         *(chopsticks + ptr->chops[1]) = 1;
         *(chairs + chair) = 1;
-        pthrerr = pthread_cond_broadcast((chopsticks_cond + ptr->chops[0]));
+        pthrerr = pthread_cond_signal((chopsticks_cond + *(ptr->chops)));
         if (pthrerr != 0)
             fatalerr("Clock", pthrerr, "Condition b/cast failed\n");
-        pthrerr = pthread_cond_broadcast((chopsticks_cond + ptr->chops[1]));
+        pthrerr = pthread_cond_signal((chopsticks_cond + *(ptr->chops + 1)));
         if (pthrerr != 0)
             fatalerr("Clock", pthrerr, "Condition b/cast failed\n");
         pthrerr = pthread_cond_broadcast(&chairs_cond);
@@ -151,6 +134,8 @@ void *philosopher(void *vptr) {
         } else {
             state = HUNGRY;
         }
+
+
         pthrerr = pthread_mutex_unlock(ptr->philosopher_mutex);
         if (pthrerr != 0)
             fatalerr("Client", pthrerr, "Mutex unlock failed\n");
@@ -182,9 +167,9 @@ void *clk(void *vptr) {
             fatalerr("Clock", 0, "Condition b/cast failed\n");
 
     }
-    printf("Average Thinking Time:    %6.2f\n", (float) nThink / (float) (T * N));
-    printf("Average Hungry Time:    %6.2f\n", (float) nHungry / (float) (T * N));
-    printf("Average Eating Time:    %6.2f\n", (float) nEating / (float) (T * N));
+    printf("Average Thinking Time: %6.2f\n", (float) nThink / (float) (T * N));
+    printf("Average Hungry Time: %6.2f\n", (float) nHungry / (float) (T * N));
+    printf("Average Eating Time: %6.2f\n", (float) nEating / (float) (T * N));
     exit(0);
 }
 
