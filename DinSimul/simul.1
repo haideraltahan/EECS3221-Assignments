@@ -1,0 +1,68 @@
+NAME
+
+simul - create N pthreads program that evaluates some aspects of the pthreads system and prints some related statistics.
+
+SYNOSPIS
+
+./simul [-L] FLOAT [-M] FLOAT [-T] INTEGER [-N] INTEGER
+
+DESCRIPTION
+
+-L: is the λ (float). Default is 0.1
+-M: is the µ (float). Default is 0.2
+-N: is the number of philosophers (integer). Default is 5
+-T: is the number of clock ticks (integer). Default is 100
+
+simul creates N threads that behave as philosophers. Every philosopher executing cycles after waking. Each philosopher can be in one of three states: THINK, HUNGRY or EATING. If he is in THINK state he invokes randomly based on λ. If the random number is less than λ he switches to HUNGRY. If he is in HUNGRY state he will switch to EATING state when the chopsticks become available. If the philosopher is in EATING state he invokes the randomly based µ. If the random number is less than µ he switches back to THINK state.
+
+
+AUTHOR
+
+Written by Haider Al-Tahan
+
+COPYRIGHT
+
+Copyright Â© 2010 Free Software Foundation, Inc. License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+
+pthread(7), pthread_cond_signal(3), pthread_cond_wait(3), pthread_create(3), pthread_mutex_lock(3), pthread_mutex_unlock(3)
+
+EXAMPLES
+
+
+./simul -L .9 -M 0.10 -T 100000
+Average Thinking Time:   0.02
+Average Hungry Time:   0.77
+Average Eating Time:   0.21
+
+
+./simul -L 0.0 -M 1.0
+Average Thinking Time:   1.00
+Average Hungry Time:   0.00
+Average Eating Time:   0.00
+
+
+./simul -L 1.0 -M 0.0 -T 10000
+Average Thinking Time:   0.00
+Average Hungry Time:   0.60
+Average Eating Time:   0.40
+
+
+./simul -L 0.90 -M 0.10 -T 10000
+Average Thinking Time:   0.02
+Average Hungry Time:   0.77
+Average Eating Time:   0.21
+
+
+./simul -L 0.5 -M 0.5 -T 10000
+Average Thinking Time:   0.30
+Average Hungry Time:   0.40
+Average Eating Time:   0.30
+
+
+./simul -L 0.1 -M 0.5 -T 10000 -N 20
+Average Thinking Time:   0.79
+Average Hungry Time:   0.05
+Average Eating Time:   0.16

@@ -24,16 +24,6 @@ enum STATES {
 int *chopsticks, *chairs;
 pthread_cond_t start_line_cond, clk_cond, chairs_cond, *chopsticks_cond;
 
-int get_chair() {
-    int i;
-    for (i = 0; i < N - 1; ++i) {
-        if (*(chairs + i) == 1) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 /***********************************************************************
                          P H I L O S O P H E R
 ************************************************************************/
@@ -44,28 +34,34 @@ void *philosopher(void *vptr) {
 
     ptr = (struct thread_arg *) vptr;
 
+    pthrerr = pthread_mutex_lock(ptr->mutex);
+    if (pthrerr != 0)
+        fatalerr("Philosopher", pthrerr, "Mutex lock failed\n");
+    nblocked++;
+    if (nblocked == N) {            /* cond_signal never returns an error code */
+        pthrerr = pthread_cond_signal(&clk_cond);
+        if (pthrerr != 0)
+            fatalerr("Philosopher", pthrerr, "Condition signal failed\n");
+    }
+    pthrerr = pthread_cond_wait(&start_line_cond, ptr->mutex);
+    if (pthrerr != 0)
+        fatalerr("Philosopher", pthrerr, "Condition wait failed\n");
+    pthrerr = pthread_mutex_unlock(ptr->mutex);
+    if (pthrerr != 0)
+        fatalerr("Philosopher", pthrerr, "Mutex unlock failed\n");
+
     while (1) {
         // Block on start_line
-        pthrerr = pthread_mutex_lock(ptr->clk_mutex);
+        pthrerr = pthread_mutex_lock(ptr->mutex);
         if (pthrerr != 0)
-            fatalerr("Client", pthrerr, "Mutex lock failed\n");
+            fatalerr("Philosopher", pthrerr, "Mutex lock failed\n");
         nblocked++;
         if (nblocked == N) {            /* cond_signal never returns an error code */
             pthrerr = pthread_cond_signal(&clk_cond);
             if (pthrerr != 0)
-                fatalerr("Client", pthrerr, "Condition signal failed\n");
+                fatalerr("Philosopher", pthrerr, "Condition signal failed\n");
         }
-        printf("Thread id: 0x%02x, waiting thread, STATE: %d\n", (unsigned) (pthread_self()), state);
-        pthrerr = pthread_cond_wait(&start_line_cond, ptr->clk_mutex);
-        if (pthrerr != 0)
-            fatalerr("Client", pthrerr, "Condition wait failed\n");
-        pthrerr = pthread_mutex_unlock(ptr->clk_mutex);
-        if (pthrerr != 0)
-            fatalerr("Client", pthrerr, "Mutext unlock failed\n");
-        printf("Thread id: 0x%02x, working, STATE: %d\n", (unsigned) (pthread_self()), state);
-        pthrerr = pthread_mutex_lock(ptr->philosopher_mutex);
-        if (pthrerr != 0)
-            fatalerr("Client", pthrerr, "Mutex lock failed\n");
+
         // THINK, HUNGRY or EATING
         if (state == THINKING) {
             nThink++;
@@ -76,69 +72,55 @@ void *philosopher(void *vptr) {
             }
         }else if (state == HUNGRY) {
             nHungry++;
-
-            chair = get_chair();
-            if (chair < 0) {
-                // Wait for a chair
-                while (chair < 0) {
-                    printf("Thread id: 0x%02x, waiting for chair\n", (unsigned) (pthread_self()));
-                    pthrerr = pthread_cond_wait(&chairs_cond, ptr->philosopher_mutex);
-                    if (pthrerr != 0)
-                        fatalerr("Client", pthrerr, "Condition wait failed\n");
-                    chair = get_chair();
-                }
+            // Wait for a chair
+            while (*chairs <= 0) {
+                pthrerr = pthread_cond_wait(&chairs_cond, ptr->mutex);
+                if (pthrerr != 0)
+                    fatalerr("Philosopher", pthrerr, "Conditionf wait failed\n");
             }
             // grab the chair
-            *(chairs + chair) = 0;
-            if (!*(chopsticks + *(ptr->chops)) || !*(chopsticks + *(ptr->chops + 1))) {
-                printf("C1, C2: %d, %d\n", *(chopsticks + *(ptr->chops)), *(chopsticks + *(ptr->chops + 1)));
-                // Wait for a chair
-                while (!*(chopsticks + *(ptr->chops)) || !*(chopsticks + *(ptr->chops + 1))) {
-                    if (!*(chopsticks + *(ptr->chops))) {
-                        printf("Thread id: 0x%02x, waiting for chop\n", (unsigned) (pthread_self()));
-                        pthrerr = pthread_cond_wait((chopsticks_cond + *(ptr->chops)), ptr->philosopher_mutex);
-                        if (pthrerr != 0)
-                            fatalerr("Client", pthrerr, "Condition wait failed\n");
-                    }
-                    if (!*(chopsticks + *(ptr->chops + 1))) {
-                        printf("Thread id: 0x%02x, waiting for chop\n", (unsigned) (pthread_self()));
-                        pthrerr = pthread_cond_wait((chopsticks_cond + *(ptr->chops + 1)), ptr->philosopher_mutex);
-                        if (pthrerr != 0)
-                            fatalerr("Client", pthrerr, "Condition wait failed\n");
-                    }
+            --*chairs;
+            chair = *chairs;
+
+
+            // Wait for a chair
+            while (!*(chopsticks + (chair % N)) || !*(chopsticks + ((chair + 1) % N ))) {
+                if (!*(chopsticks + (chair % N))) {
+                    pthrerr = pthread_cond_wait((chopsticks_cond + (chair % N)), ptr->mutex);
+                    if (pthrerr != 0)
+                        fatalerr("Philosopher", pthrerr, "Conditionf wait failed\n");
+                    *(chopsticks + (chair % N)) = 0;
+                }
+                if (!*(chopsticks + ((chair + 1) % N ))) {
+                    pthrerr = pthread_cond_wait((chopsticks_cond + ((chair + 1) % N )), ptr->mutex);
+                    if (pthrerr != 0)
+                        fatalerr("Philosopher", pthrerr, "Condition wait failed\n");
+                    *(chopsticks + ((chair + 1) % N )) = 0;
                 }
             }
-            *(chopsticks + ptr->chops[0]) = 0;
-            *(chopsticks + ptr->chops[1]) = 0;
             state = EATING;
         }else if (state == EATING) {
             nEating++;
+            if (rand0_1(&(ptr->seed)) < mu) {
+                state = THINKING;
+                *(chopsticks + (chair % N)) = 1;
+                *(chopsticks + ((chair + 1) % N )) = 1;
+                ++*chairs;
+                pthrerr = pthread_cond_signal((chopsticks_cond + (chair % N)));
+                if (pthrerr != 0)
+                    fatalerr("Philosopher", pthrerr, "Condition b/cast failed\n");
+                pthrerr = pthread_cond_signal((chopsticks_cond + ((chair + 1) % N )));
+                if (pthrerr != 0)
+                    fatalerr("Philosopher", pthrerr, "Condition b/cast failed\n");
+                pthrerr = pthread_cond_broadcast(&chairs_cond);
+                if (pthrerr != 0)
+                    fatalerr("Philosopher", pthrerr, "Condition b/cast failed\n");
+            }
         }
 
-        // If less than mu, then we switch to THINKING.
-        *(chopsticks + ptr->chops[0]) = 1;
-        *(chopsticks + ptr->chops[1]) = 1;
-        *(chairs + chair) = 1;
-        pthrerr = pthread_cond_signal((chopsticks_cond + *(ptr->chops)));
+        pthrerr = pthread_mutex_unlock(ptr->mutex);
         if (pthrerr != 0)
-            fatalerr("Clock", pthrerr, "Condition b/cast failed\n");
-        pthrerr = pthread_cond_signal((chopsticks_cond + *(ptr->chops + 1)));
-        if (pthrerr != 0)
-            fatalerr("Clock", pthrerr, "Condition b/cast failed\n");
-        pthrerr = pthread_cond_broadcast(&chairs_cond);
-        if (pthrerr != 0)
-            fatalerr("Clock", pthrerr, "Condition b/cast failed\n");
-        printf("Thread id: 0x%02x, done clock, STATE: %d\n", (unsigned) (pthread_self()), state);
-        if (rand0_1(&(ptr->seed)) < mu) {
-            state = THINKING;
-        } else {
-            state = HUNGRY;
-        }
-
-
-        pthrerr = pthread_mutex_unlock(ptr->philosopher_mutex);
-        if (pthrerr != 0)
-            fatalerr("Client", pthrerr, "Mutex unlock failed\n");
+            fatalerr("Philosopher", pthrerr, "Mutex unlock failed\n");
     }
 }
 
@@ -151,17 +133,16 @@ void *clk(void *vptr) {
     struct thread_arg *ptr;
 
     ptr = (struct thread_arg *) vptr;
-    pthrerr = pthread_mutex_lock(ptr->clk_mutex);
+    pthrerr = pthread_mutex_lock(ptr->mutex);
     if (pthrerr != 0)
         fatalerr("Clock", pthrerr, "Mutex lock failed\n");
-    for (tick = 0; tick <= T; tick++) {
+    for (tick = 0; tick < T; tick++) {
         while (nblocked < N) {
-            pthrerr = pthread_cond_wait(&clk_cond, ptr->clk_mutex);
+            pthrerr = pthread_cond_wait(&clk_cond, ptr->mutex);
             if (pthrerr != 0)
                 fatalerr("Clock", 0, "Condition wait failed\n");
         }
         nblocked = 0;
-        printf("Clock BD: %d\n", tick);
         pthrerr = pthread_cond_broadcast(&start_line_cond);
         if (pthrerr != 0)
             fatalerr("Clock", 0, "Condition b/cast failed\n");
@@ -180,7 +161,7 @@ int main(int argc, char **argv) {
     int pthrerr, i;
     struct thread_arg *allargs;
     pthread_t *alltids;
-    pthread_mutex_t clk_mutex, philosopher_mutex;
+    pthread_mutex_t clk_mutex, mutex;
 
     /* Get Arguements */
     while (++i < argc) {
@@ -195,13 +176,14 @@ int main(int argc, char **argv) {
         else
             fatalerr(argv[i], 0, "Invalid argument\n");
     }
-/*    printf("i: %d, L: %f, M: %f, T: %d, N: %d\n", i, lam, mu, T, N);
-    printf("i: %d, argc: %d\n", i, argc);*/
+/*  printf("i: %d, L: %f, M: %f, T: %d, N: %d\n", i, lam, mu, T, N);
+    printf("i: %d, argc: %d\n", i, argc); */
     if (i != argc)
         fatalerr(argv[0], 0, "Odd number of args\n");
 
     nblocked = 0;
-    int lchopsticks[N], lchairs[N - 1];
+    int lchopsticks[N];
+    int lchairs = N - 1;
     pthread_cond_t lchopsticks_cond[N];
 
     /* Initializer conditions and mutex */
@@ -214,7 +196,7 @@ int main(int argc, char **argv) {
     pthrerr = pthread_mutex_init(&clk_mutex, NULL);
     if (pthrerr != 0)
         fatalerr(argv[0], 0, "Initialization failed\n");
-    pthrerr = pthread_mutex_init(&philosopher_mutex, NULL);
+    pthrerr = pthread_mutex_init(&mutex, NULL);
     if (pthrerr != 0)
         fatalerr(argv[0], 0, "Initialization failed\n");
     pthrerr = pthread_cond_init(&chairs_cond, NULL);
@@ -225,14 +207,11 @@ int main(int argc, char **argv) {
         pthrerr = pthread_cond_init(&lchopsticks_cond[i], NULL);
         if (pthrerr != 0)
             fatalerr(argv[0], 0, "Initialization failed\n");
-        if (i < N - 1) {
-            lchairs[i] = 1;
-        }
     }
-//    printf("Working \n");
+    /*printf("Working \n");*/
     chopsticks_cond = lchopsticks_cond;
     chopsticks = lchopsticks;
-    chairs = lchairs;
+    chairs = &lchairs;
     /* Create args for philosophers */
     allargs = (struct thread_arg *)
             malloc((N + 1) * sizeof(struct thread_arg));
@@ -244,15 +223,12 @@ int main(int argc, char **argv) {
         fatalerr(argv[0], 0, "Out of memory\n");
 
     allargs[0].seed = 100;
-    allargs[0].clk_mutex = &clk_mutex;
-    allargs[0].philosopher_mutex = &philosopher_mutex;
+    allargs[0].mutex = &mutex;
 
     //create all threads
     for (i = 0; i < N; i++) {
         allargs[i] = allargs[0];
         allargs[i].seed += i;
-        allargs[i].chops[0] = i % N;
-        allargs[i].chops[1] = (i + 1) % N;
         pthrerr = pthread_create(alltids + i, NULL, philosopher, allargs + i);
         if (pthrerr != 0)
             fatalerr(argv[0], pthrerr, "Philosopher creation failed\n");
