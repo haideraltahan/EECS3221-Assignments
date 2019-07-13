@@ -1,5 +1,5 @@
 1. The pthread function calls naming convention always start with 'pthread' followed by either an action (e.g. create, cancel, etc...) or an property (e.g. cond, mutex, attr). If pthread was followed by a property it is then followed by an action on that property. pthread_[action] or pthread_[property]_[action]. Reference PTHREADS(7).
-2. POSIX threads support mutex and condition variables as synchronization mechanisms.
+2. POSIX threads support mutex, condition variables, join as synchronization mechanisms.
 3. We call pthread_cond_wait from within a loop because it makes sure it exit the block at the right condition. This specifically happens when multiple threads are waiting on the same condition variables, resulting in multiple threads waking up. An example, if two philosophers are waiting for one chair, if both received a signal that chair is empty, only one should continue executing while the other need to wait again.
 4. It is dependant on the implementation. It can be the case that all threads continue executing or only one.
 5. There will be a deadlock, if other threads need the mutex that is not released. When blocking on a condition variable, the pthread function calls release the mutex lock.
