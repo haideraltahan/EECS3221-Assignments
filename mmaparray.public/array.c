@@ -28,30 +28,48 @@ void open_array(char *filename, array_t *arrayp, int *sizep) {                /*
 /**********************************************************************/
 /********************     C L O S E  A R R A Y     ********************/
 /**********************************************************************/
-void close_array(array_t *arrayp, int size) {                /* Unmaps array and sets it to NULL */
-    munmap(arrayp,size);
+void close_array(array_t *arrayp, int size) {
+    /* Unmaps array and sets it to NULL */
+    if (munmap(arrayp, size) == -1)
+    {
+        perror("Error un-mmapping the file");
+    }
 }
 
 /**********************************************************************/
 /********************    C R E A T E  A R R A Y    ********************/
 /**********************************************************************/
-void
-create_array(char *filename, int index, array_t *arrayp) {                /* Creates a file with an array with index */
+void create_array(char *filename, int index, array_t *arrayp) {
+    /* Creates a file with an array with index */
     /* elements, all with the valid member false. */
     /* It is fatal error if file exists */
     /* size is the size of the file divided by the size of the array struct */
     /* pointer array is obtained with mmap */
-    int fd, size;
+    int fd, i, filesize;
 
-    size = index * sizeof(array_t);
-    if ((fd = open(filename, O_RDWR | O_CREAT, 0777)) < 0) {
+    filesize = index * sizeof(array_t);
+
+    if ((fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0) {
         fatalerr("create_array", fd, "Could not create the file");
     }
 
-    array_t *map = (array_t *) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (map==MAP_FAILED)
+    if (ftruncate(fd, filesize) == -1)
     {
-        fatalerr("create_array", 0, "Could not create mmap");
+        fatalerr("create_array", -1, "Could not 'stretch' the file");
+    }
+
+    arrayp = (array_t *) mmap(NULL, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (arrayp == MAP_FAILED) {
+        close(fd);
+        fatalerr("create_array", -1, "Could not create mmap");
+    }
+
+    for (i = 0; i < index; ++i) {
+        array_t temp = malloc(sizeof(array_t));
+        if (temp == NULL)
+            fatalerr("create_array", 0, "Out of memory\n");
+        temp->valid = 0;
+        arrayp[i] = temp;
     }
 
 }
@@ -86,7 +104,16 @@ void delete_entry(array_t array, int index) {                /* Sets the valid e
 /**********************************************************************/
 /********************     P R I N T   A R R A Y    ********************/
 /**********************************************************************/
-void print_array(array_t array, int size) {                /* Prints all entries with valid member true */
+void print_array(array_t array, int size) {
+    /* Prints all entries with valid member true */
     /* using the same format as in the main */
-
+    int i;
+    printf("out:\n");
+    for (i = 0; i < size; ++i) {
+        if(array[i].valid){
+            printf("index: %d, ", array[i].index);
+            printf("name: %s, ", array[i].name);
+            printf("age: %.6f\n", array[i].age);
+        }
+    }
 }
